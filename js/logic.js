@@ -249,6 +249,67 @@ var Logic = (function () {
     return n === 1 ? '1 year ago' : n + ' years ago';
   }
 
+  var AVG_SONG_MINUTES = 3.5; // Last.fm logs plays, not durations, so listening time is estimated
+
+  /**
+   * Everything the end-of-season recap shows. Pure data: photos are returned
+   * as {day, id} references, never blobs. Slides with nothing to show come
+   * back empty/null so the UI can skip them.
+   */
+  function recapData(season, entries, playsByDay, todayKey) {
+    var stats = capsuleStats(season, entries, playsByDay, todayKey);
+    var days = daysIn(season.start, season.end, todayKey);
+    var all = [];
+    for (var i = 0; i < days.length; i++) all = all.concat(playsByDay[days[i]] || []);
+    all.sort(function (a, b) { return a.uts - b.uts; });
+
+    var top = stats.topTracks[0] || null, topSong = null;
+    if (top) {
+      var id = songId(top), first = null;
+      for (var j = 0; j < all.length; j++) if (songId(all[j]) === id) { first = all[j]; break; }
+      topSong = { name: top.name, artist: top.artist, image: top.image, plays: top.plays,
+                  firstDay: first ? dateKey(new Date(first.uts * 1000)) : null };
+    }
+
+    var loudest = null;
+    if (stats.busiestDay) {
+      var lk = stats.busiestDay.day, le = entries[lk];
+      loudest = { day: lk, plays: stats.busiestDay.plays, topTracks: topTracks(playsByDay[lk] || [], 3),
+                  note: le && le.note ? le.note.trim() : '' };
+    }
+
+    var songMemories = [], photos = [];
+    var entryDays = Object.keys(entries).sort();
+    for (var k = 0; k < entryDays.length; k++) {
+      var dk = entryDays[k], e = entries[dk];
+      if (dk < season.start || dk > season.end) continue;
+      (e.moments || []).forEach(function (m) { if (m.song) songMemories.push({ day: dk, song: m.song, text: m.text || '' }); });
+      (e.photos || []).forEach(function (p) { photos.push({ day: dk, id: p.id }); });
+    }
+
+    var bookend = function (t) { return t ? { name: t.name, artist: t.artist, image: t.image, day: dateKey(new Date(t.uts * 1000)) } : null; };
+    return {
+      season: season,
+      finished: !!todayKey && todayKey > season.end,
+      stats: stats,
+      hours: Math.round(all.length * AVG_SONG_MINUTES / 60),
+      topSong: topSong,
+      topArtist: stats.topArtists[0] || null,
+      loudest: loudest,
+      songMemories: songMemories,
+      photos: photos,
+      firstSong: bookend(all[0]),
+      lastSong: all.length > 1 ? bookend(all[all.length - 1]) : null,
+      isEmpty: all.length === 0 && stats.journaledDays === 0
+    };
+  }
+
+  /** Seasons that ended within the last `withinDays` days, newest first. */
+  function recentlyEndedSeasons(seasons, todayKey, withinDays) {
+    var cutoff = addDays(todayKey, -withinDays);
+    return sortSeasons(seasons.filter(function (s) { return s.end < todayKey && s.end >= cutoff; }));
+  }
+
   /** Short random id for photos and moments. */
   function uid() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -260,7 +321,8 @@ var Logic = (function () {
     sortSeasons: sortSeasons, daysIn: daysIn, parseSpotifyUrl: parseSpotifyUrl,
     normalizeTracks: normalizeTracks, totalPages: totalPages, bucketByDay: bucketByDay,
     topTracks: topTracks, topArtists: topArtists, entryHasContent: entryHasContent,
-    capsuleStats: capsuleStats, onThisDay: onThisDay, yearsAgo: yearsAgo, uid: uid
+    capsuleStats: capsuleStats, onThisDay: onThisDay, yearsAgo: yearsAgo, uid: uid,
+    recapData: recapData, recentlyEndedSeasons: recentlyEndedSeasons
   };
 })();
 

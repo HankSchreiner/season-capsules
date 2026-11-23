@@ -1,8 +1,8 @@
 /* Offline support: network-first, falling back to the cached app when offline.
    Online you always get the newest version; offline the last good copy still opens.
    Bump VERSION whenever app files change. */
-var VERSION = 'sc-v3';
-var SHELL = ['./', 'index.html', 'css/styles.css', 'js/logic.js', 'js/db.js', 'js/lastfm.js', 'js/app.js', 'icon.svg', 'manifest.webmanifest'];
+var VERSION = 'sc-v4';
+var SHELL = ['./', 'index.html', 'css/styles.css', 'js/logic.js', 'js/db.js', 'js/lastfm.js', 'js/recap.js', 'js/app.js', 'icon.svg', 'manifest.webmanifest'];
 
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(VERSION).then(function (c) {

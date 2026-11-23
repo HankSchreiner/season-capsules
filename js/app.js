@@ -86,6 +86,21 @@
            '<span class="tri"></span>Play ' + esc(season.name) + '</a>';
   }
 
+  // ---------- recap ----------
+
+  function openRecap(season, after) {
+    flushNote();
+    Recap.open(season, { color: accentFor(season), sync: connected(), onClose: after });
+  }
+
+  /** "Your Fall 2026 recap is ready" on Today, for 30 days after a season ends, until watched. */
+  function recapBannerHtml() {
+    var ready = Logic.recentlyEndedSeasons(seasons(), today(), 30).filter(function (s) { return !Recap.hasSeen(s.id); })[0];
+    if (!ready || state.day !== today()) return '';
+    return '<button id="recap-banner" class="recap-banner" data-id="' + esc(ready.id) + '"><span class="rb-play"></span>' +
+           '<span><b>Your ' + esc(ready.name) + ' recap is ready</b><span>Your songs, your memories, your season.</span></span></button>';
+  }
+
   // ---------- navigation ----------
 
   function go(tab) {
@@ -140,6 +155,7 @@
         '<button id="next" aria-label="Next day"' + (isToday ? ' disabled' : '') + '>›</button>' +
       '</div>' +
       seasonHtml +
+      recapBannerHtml() +
       '<section class="card">' +
         '<h2>' + (isToday ? 'Today' : 'This day') + ' <span id="saved" class="muted small"></span></h2>' +
         '<textarea id="note" rows="4" placeholder="What happened? Where were you, who were you with, how did it feel?"></textarea>' +
@@ -162,6 +178,10 @@
       '<section class="card" id="otd-card" hidden><h2>On this day</h2><div id="otd"></div></section>';
 
     bindToday(season);
+    if ($('#recap-banner')) $('#recap-banner').onclick = function () {
+      var s = seasonById(this.dataset.id);
+      if (s) openRecap(s, renderToday);
+    };
 
     DB.getEntry(day).then(function (e) {
       if (state.day !== day || state.tab !== 'today') return;
@@ -417,11 +437,14 @@
         '<div class="season-name">' + esc(season.name) + '</div>' +
         '<div class="muted">' + esc(Logic.prettyDay(season.start, true)) + ' – ' + esc(Logic.prettyDay(season.end, true)) + '</div>' +
         playButton(season, false) +
+        '<button id="open-recap" class="recap-btn">' + (season.end < today() ? 'Play your ' + esc(season.name) + ' recap' : season.start > today() ? 'Recap unlocks when the season starts' : 'Preview your recap so far') + '</button>' +
         (connected() ? '<button id="sync" class="ghost">Sync listening for this season</button><div id="sync-status" class="small muted"></div>' : '') +
       '</section>' +
       '<div id="capsule-body" class="muted">Building capsule…</div>';
 
     $('#season-pick').onchange = function () { state.capsuleSeasonId = this.value; renderCapsule(); };
+    if (season.start > today()) $('#open-recap').disabled = true;
+    $('#open-recap').onclick = function () { openRecap(season, renderCapsule); };
     if ($('#sync')) $('#sync').onclick = function () {
       var btn = this, end = season.end < today() ? season.end : today();
       btn.disabled = true;

@@ -54,6 +54,15 @@ over plain http).
 Last.fm only logs plays from the moment you connect it. The longer it's
 connected, the better your capsules get.
 
+## Season recap
+
+When a season ends, Today shows **Your … recap is ready** for 30 days. Tap
+through full-screen slides: your song of the season, top 5, hours listened
+(estimated at 3.5 min per play), top artist, loudest day and what you wrote,
+the songs you tied memories to, a photo collage, and the first and last songs
+of the season. The last slide makes a 1080x1920 share image. Capsule → *Preview
+your recap so far* works mid-season.
+
 ## Your data
 
 Everything stays on the device that created it. Use Settings → **Export
@@ -71,6 +80,7 @@ css/styles.css        styles
 js/logic.js           pure logic: seasons, dates, Spotify links, Last.fm parsing, stats (tested)
 js/db.js              IndexedDB + localStorage storage, backup/restore
 js/lastfm.js          Last.fm listening history
+js/recap.js           end-of-season recap slides + share image
 js/app.js             UI: Today, Capsule, Settings
 sw.js                 offline cache (bump VERSION when files change)
 manifest.webmanifest  home-screen install
@@ -81,6 +91,5 @@ tests/                ./tests/run.sh (uses Node, or macOS's built-in JavaScriptC
 
 - Home-screen / lock-screen widget for a one-tap note (needs a native app)
 - Native iOS app with Apple MusicKit, so music can play inside the app
-- End-of-season "wrapped" share card
 - Printed season book
 - Reminders: "One year ago today…" notification

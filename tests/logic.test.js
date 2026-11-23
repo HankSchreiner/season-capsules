@@ -112,5 +112,55 @@ eq('yearsAgo', Logic.yearsAgo('2024-11-23', '2026-11-23'), '2 years ago');
 eq('yearsAgo singular', Logic.yearsAgo('2025-11-23', '2026-11-23'), '1 year ago');
 eq('uid unique', Logic.uid() !== Logic.uid(), true);
 
+// --- recap ---
+(function () {
+  var at = function (key, h, m) { var d = Logic.parseKey(key); d.setHours(h, m || 0); return d.getTime() / 1000; };
+  var t = function (n, a, key, h) { return { name: n, artist: a, album: '', image: '', uts: at(key, h) }; };
+  var season = { id: 's', name: 'Fall 2026', start: '2026-09-01', end: '2026-11-30' };
+  var plays = Logic.bucketByDay([
+    t('Nights', 'Frank Ocean', '2026-09-02', 8),          // first song of season
+    t('Ivy', 'Frank Ocean', '2026-09-05', 9),
+    t('Ivy', 'Frank Ocean', '2026-09-05', 10),
+    t('Kyoto', 'Phoebe Bridgers', '2026-10-10', 9),
+    t('Kyoto', 'Phoebe Bridgers', '2026-10-10', 10),
+    t('Ivy', 'Frank Ocean', '2026-10-10', 11),
+    t('Garden Song', 'Phoebe Bridgers', '2026-11-29', 23)  // last song of season
+  ]);
+  var entries = {
+    '2026-08-30': { note: 'before season', moments: [{ text: 'x', song: { name: 'A', artist: 'B' } }], photos: [{ id: 'p0' }] },
+    '2026-09-05': { note: 'drove to the lake', moments: [{ id: 'm1', text: 'windows down', song: { name: 'Ivy', artist: 'Frank Ocean' } }, { id: 'm2', text: 'no song' }], photos: [{ id: 'p1' }] },
+    '2026-10-10': { note: '  first frost  ', moments: [], photos: [{ id: 'p2' }, { id: 'p3' }] }
+  };
+  var r = Logic.recapData(season, entries, plays, '2026-12-02');
+  eq('recap finished', r.finished, true);
+  eq('recap top song', r.topSong, { name: 'Ivy', artist: 'Frank Ocean', image: '', plays: 3, firstDay: '2026-09-05' });
+  eq('recap top artist', r.topArtist, { name: 'Frank Ocean', plays: 4 });
+  eq('recap hours estimate', r.hours, 0);
+  eq('recap loudest day', r.loudest.day, '2026-10-10');
+  eq('recap loudest note trimmed', r.loudest.note, 'first frost');
+  eq('recap loudest top tracks', r.loudest.topTracks.map(function (x) { return x.name; }), ['Kyoto', 'Ivy']);
+  eq('recap song memories only in season, only with songs', r.songMemories, [{ day: '2026-09-05', song: { name: 'Ivy', artist: 'Frank Ocean' }, text: 'windows down' }]);
+  eq('recap photos in season', r.photos.map(function (p) { return p.id; }), ['p1', 'p2', 'p3']);
+  eq('recap first song', r.firstSong.name + ' ' + r.firstSong.day, 'Nights 2026-09-02');
+  eq('recap last song', r.lastSong.name + ' ' + r.lastSong.day, 'Garden Song 2026-11-29');
+  eq('recap not empty', r.isEmpty, false);
+
+  var mid = Logic.recapData(season, entries, plays, '2026-10-10');
+  eq('recap mid-season not finished', mid.finished, false);
+  eq('recap mid-season ignores future plays', mid.lastSong.name, 'Ivy');
+
+  var many = []; for (var i = 0; i < 120; i++) many.push(t('S' + (i % 5), 'A', '2026-09-10', 12));
+  eq('recap hours rounds', Logic.recapData(season, {}, Logic.bucketByDay(many), '2026-12-01').hours, 7);
+
+  var empty = Logic.recapData(season, {}, {}, '2026-12-01');
+  eq('recap empty', [empty.isEmpty, empty.topSong, empty.loudest, empty.firstSong, empty.lastSong], [true, null, null, null, null]);
+  var one = Logic.recapData(season, {}, Logic.bucketByDay([t('Only', 'One', '2026-09-03', 9)]), '2026-12-01');
+  eq('recap single play has no separate last song', [one.firstSong.name, one.lastSong], ['Only', null]);
+
+  var ss = [{ name: 'Summer', start: '2026-06-01', end: '2026-08-31' }, season, { name: 'Winter', start: '2026-12-01', end: '2027-02-28' }];
+  eq('recently ended', Logic.recentlyEndedSeasons(ss, '2026-12-05', 30).map(function (s) { return s.name; }), ['Fall 2026']);
+  eq('recently ended none on last day', Logic.recentlyEndedSeasons(ss, '2026-11-30', 30).map(function (s) { return s.name; }), []);
+})();
+
 log((fail ? 'RESULT: FAIL' : 'RESULT: PASS') + ' (' + pass + ' passed, ' + fail + ' failed)');
 if (fail && typeof process !== 'undefined') process.exit(1);
