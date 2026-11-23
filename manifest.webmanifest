@@ -1,0 +1,13 @@
+{
+  "name": "Season Capsules",
+  "short_name": "Capsules",
+  "description": "Press play on this season's playlist and keep the memories that go with it.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#16131a",
+  "theme_color": "#16131a",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
