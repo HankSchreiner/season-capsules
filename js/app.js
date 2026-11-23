@@ -69,14 +69,14 @@
     return s;
   }
 
-  /** Accent colour per season so each capsule feels different. */
+  /** Header colour per season (like a playlist's cover colour) so each capsule feels different. */
   function accentFor(season) {
     var n = (season && season.name || '').toLowerCase();
-    if (n.indexOf('fall') >= 0 || n.indexOf('autumn') >= 0) return '#e0803a';
-    if (n.indexOf('winter') >= 0) return '#6fa8dc';
-    if (n.indexOf('spring') >= 0) return '#6cc28a';
-    if (n.indexOf('summer') >= 0) return '#f2c14e';
-    return '#b48ce6';
+    if (n.indexOf('fall') >= 0 || n.indexOf('autumn') >= 0) return '#b5562a';
+    if (n.indexOf('winter') >= 0) return '#3b5f8f';
+    if (n.indexOf('spring') >= 0) return '#2f7d56';
+    if (n.indexOf('summer') >= 0) return '#a87b12';
+    return '#5b3f8c';
   }
 
   function playButton(season, big) {
@@ -108,7 +108,7 @@
   function renderToday() {
     var day = state.day, isToday = day === today();
     var season = Logic.seasonForDate(seasons(), day);
-    document.documentElement.style.setProperty('--accent', accentFor(season));
+    document.documentElement.style.setProperty('--season', accentFor(season));
     state.pendingSong = null;
 
     var seasonHtml;
@@ -353,7 +353,8 @@
       rows.push(t);
     });
     box.classList.remove('muted');
-    box.innerHTML = '<div class="muted small">' + tracks.length + ' plays · ' + rows.length + ' songs</div>' +
+    box.innerHTML = '<div class="muted small">' + tracks.length + (tracks.length === 1 ? ' play' : ' plays') + ' · ' +
+      rows.length + (rows.length === 1 ? ' song' : ' songs') + '</div>' +
       rows.map(function (t, i) {
         var time = new Date(t.uts * 1000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
         var n = counts[(t.artist + '|' + t.name).toLowerCase()];
@@ -406,7 +407,7 @@
     var current = Logic.seasonForDate(list, today());
     var season = seasonById(state.capsuleSeasonId) || current || list[0];
     state.capsuleSeasonId = season.id;
-    document.documentElement.style.setProperty('--accent', accentFor(season));
+    document.documentElement.style.setProperty('--season', accentFor(season));
 
     view.innerHTML =
       '<div class="row"><select id="season-pick">' + list.map(function (s) {
@@ -493,7 +494,7 @@
   // ---------- SETTINGS ----------
 
   function renderSettings() {
-    document.documentElement.style.setProperty('--accent', accentFor(Logic.seasonForDate(seasons(), today())));
+    document.documentElement.style.setProperty('--season', accentFor(Logic.seasonForDate(seasons(), today())));
     var s = DB.getSettings();
     var list = Logic.sortSeasons(seasons());
 

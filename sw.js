@@ -1,6 +1,6 @@
 /* Offline support: serve the app shell from cache, refresh it in the background.
    Bump VERSION whenever app files change so phones pick up the new version. */
-var VERSION = 'sc-v1';
+var VERSION = 'sc-v2';
 var SHELL = ['./', 'index.html', 'css/styles.css', 'js/logic.js', 'js/db.js', 'js/lastfm.js', 'js/app.js', 'icon.svg', 'manifest.webmanifest'];
 
 self.addEventListener('install', function (e) {
